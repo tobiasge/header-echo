@@ -1,0 +1,16 @@
+{
+  "listeners": {
+    "*:8080": {
+      "pass": "applications/header-echo"
+    }
+  },
+  "applications": {
+    "header-echo": {
+      "type": "python 3",
+      "path": "/opt/header-echo/app/",
+      "home": "/opt/header-echo/venv/",
+      "module": "asgi",
+      "callable": "app"
+    }
+  }
+}
