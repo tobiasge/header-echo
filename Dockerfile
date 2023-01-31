@@ -1,4 +1,4 @@
-FROM ubuntu:22.04 as builder
+FROM ubuntu:22.10 as builder
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -qq \
@@ -22,7 +22,7 @@ RUN /opt/header-echo/venv/bin/pip install \
 # Main stage
 ###
 
-FROM ubuntu:22.04 as main
+FROM ubuntu:22.10 as main
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -qq \
@@ -38,13 +38,13 @@ RUN export DEBIAN_FRONTEND=noninteractive \
       tini \
     && curl -sL https://nginx.org/keys/nginx_signing.key \
       > /etc/apt/trusted.gpg.d/nginx.asc && \
-    echo "deb https://packages.nginx.org/unit/ubuntu/ jammy unit" \
+    echo "deb https://packages.nginx.org/unit/ubuntu/ kinetic unit" \
       > /etc/apt/sources.list.d/unit.list \
     && apt-get update -qq \
     && apt-get install \
       --yes -qq --no-install-recommends \
-      unit=1.28.0-1~jammy \
-      unit-python3.10=1.28.0-1~jammy \
+      unit=1.29.0-1~kinetic \
+      unit-python3.10=1.29.0-1~kinetic \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /opt/header-echo/venv /opt/header-echo/venv
