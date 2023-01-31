@@ -1,0 +1,104 @@
+name: Build and release Docker image
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    - cron: '45 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  packages: write
+  contents: read
+
+jobs:
+  build-release:
+    name: Build and release
+    runs-on: ubuntu-22.04
+    env:
+      REGISTRY: ${{ vars.DOCKER_REGISTRY }}
+      IMAGE: ${{ vars.DOCKER_IMAGE_NAME }}
+      ORG: ${{ vars.DOCKER_IMAGE_ORG }}
+      TAG: 'latest'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: main
+      - name: Login to ${{ env.REGISTRY }}
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ vars.DOCKER_REGISTRY }}
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Get version of Header Echo
+        id: get-header-echo-version
+        run: |
+          echo "value=$(cat VERSION)" >> $GITHUB_OUTPUT
+      - name: "Get last layer ID of the base image"
+        id: get_base_image_sha
+        run: |
+          LAST_LAYER=$(skopeo inspect docker://docker.io/ubuntu:22.10 | jq -r ".Layers | last")
+          echo "value=$LAST_LAYER" >> $GITHUB_OUTPUT
+      - name: Get commit hash
+        id: get_repo_sha
+        run: |
+          echo "value=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+      - name: Build full image name
+        id: fin
+        run: |
+          echo "fin=${{env.REGISTRY}}/${{env.ORG}}/${{env.IMAGE}}:${{env.TAG}}" >> $GITHUB_OUTPUT
+      - name: Determine latest REPO_SHA label
+        id: latest_repo_sha
+        env:
+          LABEL: REPO_SHA
+        run: |
+          OLD_LABEL=$(skopeo inspect docker://${{steps.fin.outputs.fin}} | jq -r ".Labels.${{env.LABEL}}")
+          echo "value=$OLD_LABEL" >> $GITHUB_OUTPUT
+      - name: Determine latest BASE_IMAGE_SHA label
+        id: latest_base_image_sha
+        env:
+          LABEL: BASE_IMAGE_SHA
+        run: |
+          OLD_LABEL=$(skopeo inspect docker://${{steps.fin.outputs.fin}} | jq -r ".Labels.${{env.LABEL}}")
+          echo "value=$OLD_LABEL" >> $GITHUB_OUTPUT
+      - name: "Check if build should proceed"
+        id: should_proceed
+        run: |
+          BUILD_REASON=""
+          SHOULD_BUILD="false"
+          if [ "${{steps.get_repo_sha.outputs.value}}" != "${{steps.latest_repo_sha.outputs.value}}" ]; then
+            BUILD_REASON="${BUILD_REASON} repo"
+            SHOULD_BUILD="true"
+          fi
+          if [ "${{steps.get_base_image_sha.outputs.value}}" != "${{steps.latest_base_image_sha.outputs.value}}" ]; then
+            BUILD_REASON="${BUILD_REASON} base_image"
+            SHOULD_BUILD="true"
+          fi
+          if [ -n "${BUILD_REASON}" ]; then
+            BUILD_REASON=$(sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' <<<"$BUILD_REASON")
+            echo "build_reason=$BUILD_REASON" >> $GITHUB_OUTPUT
+          fi
+          echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+        if: steps.should_proceed.outputs.should_build == 'true'
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        if: steps.should_proceed.outputs.should_build == 'true'
+      - name: Build docker image
+        uses: docker/build-push-action@v3
+        if: steps.should_proceed.outputs.should_build == 'true'
+        with:
+          platforms: linux/amd64,linux/arm64
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{env.REGISTRY}}/${{ env.ORG }}/${{ env.IMAGE }}:${{ env.TAG }}
+            ${{env.REGISTRY}}/${{ env.ORG }}/${{ env.IMAGE }}:${{ steps.get-header-echo-version.outputs.value }}
+          labels: |
+            REPO_SHA=${{ steps.get_repo_sha.outputs.value }}
+            BASE_IMAGE_SHA=${{ steps.get_base_image_sha.outputs.value }}
+            BUILD_REASON=${{ steps.should_proceed.outputs.build_reason }}
+
