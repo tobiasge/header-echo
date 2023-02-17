@@ -1,3 +1,5 @@
+import socket
+
 from fastapi import FastAPI, Request
 
 app = FastAPI()
@@ -14,4 +16,5 @@ async def index(request: Request, full_path: str):
         "params": request.query_params,
         "headers": request.headers,
         "body": await request.body(),
+        "server": socket.gethostname(),
     }
