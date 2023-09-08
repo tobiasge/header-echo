@@ -1,8 +1,16 @@
 import socket
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request,HTTPException
 
 app = FastAPI()
+
+@app.get("/errors/{response_code}/{message}")
+@app.put("/errors/{response_code}/{message}")
+@app.post("/errors/{response_code}/{message}}")
+@app.delete("/errors/{response_code}/{message}")
+async def index(request: Request, response_code: str, message: str):
+
+    raise HTTPException(status_code=int(response_code), detail=message)
 
 
 @app.get("/{full_path:path}")
