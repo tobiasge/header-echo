@@ -81,7 +81,7 @@ jobs:
           fi
           echo "should_build=$SHOULD_BUILD" >> $GITHUB_OUTPUT
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v2
+        uses: docker/setup-qemu-action@v3
         if: steps.should_proceed.outputs.should_build == 'true'
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
