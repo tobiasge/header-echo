@@ -1,4 +1,4 @@
-FROM ubuntu:23.04 as builder
+FROM ubuntu:24.04 as builder
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -qq \
@@ -22,7 +22,7 @@ RUN /opt/header-echo/venv/bin/pip install \
 # Main stage
 ###
 
-FROM ubuntu:23.04 as main
+FROM ubuntu:24.04 as main
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -qq \
