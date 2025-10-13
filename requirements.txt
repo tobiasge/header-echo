@@ -1,2 +1,2 @@
-fastapi==0.118.0
+fastapi==0.119.0
 granian[uvloop]==2.5.4
