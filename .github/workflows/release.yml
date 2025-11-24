@@ -22,7 +22,7 @@ jobs:
       TAG: 'latest'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           ref: main
       - name: Login to ${{ env.REGISTRY }}
