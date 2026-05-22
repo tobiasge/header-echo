@@ -1,4 +1,4 @@
-FROM docker.io/python:3.13-slim AS builder
+FROM docker.io/python:3.14-slim AS builder
 
 RUN python3 -m venv /opt/header-echo/venv \
     && /opt/header-echo/venv/bin/python3 -m pip install --upgrade \
@@ -12,7 +12,7 @@ RUN /opt/header-echo/venv/bin/pip install \
 # Main stage
 ###
 
-FROM docker.io/python:3.13-slim AS main
+FROM docker.io/python:3.14-slim AS main
 
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -qq \

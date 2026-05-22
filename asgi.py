@@ -24,5 +24,6 @@ async def index(request: Request, full_path: str):
         "params": request.query_params,
         "headers": request.headers,
         "body": await request.body(),
+        "client_host": request.client.host
         "server": socket.gethostname(),
     }
