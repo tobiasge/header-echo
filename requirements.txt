@@ -1,2 +1,2 @@
 fastapi==0.162.5
-granian[uvloop]==2.8.7
+granian[uvloop]==2.8.8
